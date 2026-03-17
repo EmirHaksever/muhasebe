@@ -66,22 +66,22 @@ require_once __DIR__ . '/../includes/header.php';
 
 <?php if (isset($_GET['ok'])): ?>
     <div class="alert alert-success" role="alert">
-        Cari hesap başarıyla eklendi.
+        Müşteri hesap başarıyla eklendi.
     </div>
 <?php endif; ?>
 
 <div class="row justify-content-center">
-    <div class="col-12 col-lg-8 col-xl-7">
+    <div class="col-12">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white border-0 pt-4 pb-0">
-                <h2 class="h4 mb-1">Cari Hesap Ekle</h2>
+                <h2 class="h4 mb-1">Müşteri Hesap Ekle</h2>
                 <p class="text-muted mb-0">Yeni müşteri veya tedarikçi kartı oluşturun.</p>
             </div>
 
             <div class="card-body pt-4">
                 <form method="POST">
                     <div class="mb-3">
-                        <label for="type" class="form-label">Cari Tipi <span class="text-danger">*</span></label>
+                        <label for="type" class="form-label">Müşteri Tipi <span class="text-danger">*</span></label>
                         <select name="type" id="type" class="form-select" required>
                             <option value="">Seçiniz</option>
                             <option value="musteri" <?php echo ($type === 'musteri') ? 'selected' : ''; ?>>Müşteri</option>
@@ -90,7 +90,7 @@ require_once __DIR__ . '/../includes/header.php';
                     </div>
 
                     <div class="mb-3">
-                        <label for="name" class="form-label">Cari Adı <span class="text-danger">*</span></label>
+                        <label for="name" class="form-label">Müşteri Adı <span class="text-danger">*</span></label>
                         <input
                             type="text"
                             name="name"
@@ -142,7 +142,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                     <div class="d-flex flex-wrap gap-2">
                         <button type="submit" class="btn btn-primary">Kaydet</button>
-                        <a href="cari_list.php" class="btn btn-outline-secondary">Cari Listesi</a>
+                        <a href="cari_list.php" class="btn btn-outline-secondary">Müşteri Listesi</a>
                     </div>
                 </form>
             </div>

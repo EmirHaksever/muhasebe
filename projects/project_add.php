@@ -230,11 +230,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+
 $settingsStmt = $pdo->query("SELECT default_vat_rate FROM settings ORDER BY id ASC LIMIT 1");
 $settings = $settingsStmt->fetch(PDO::FETCH_ASSOC);
 $defaultVatRateText = isset($settings['default_vat_rate']) && (float)$settings['default_vat_rate'] > 0
     ? number_format((float)$settings['default_vat_rate'], 2, ',', '.')
     : '0,00';
+
 $musteriSorgu = $pdo->prepare("
     SELECT id, name
     FROM cari_accounts
@@ -257,6 +259,10 @@ if (isset($_GET['ok'])) {
     $success = 'Proje başarıyla kaydedildi.';
 }
 
+if (isset($_GET['show_customer_form'])) {
+    $showCustomerForm = true;
+}
+
 include_once __DIR__ . "/../includes/header.php";
 ?>
 
@@ -273,7 +279,7 @@ include_once __DIR__ . "/../includes/header.php";
 <?php endif; ?>
 
 <div class="row g-4">
-    <div class="col-12 <?php echo (isset($_GET['show_customer_form']) || $showCustomerForm) ? 'col-xl-7' : 'col-xl-8'; ?>">
+    <div class="<?php echo $showCustomerForm ? 'col-12 col-xl-7' : 'col-12'; ?>">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white border-0 pt-4 pb-0">
                 <h2 class="h4 mb-1">Proje Ekle</h2>
@@ -384,7 +390,7 @@ include_once __DIR__ . "/../includes/header.php";
         </div>
     </div>
 
-    <?php if (isset($_GET['show_customer_form']) || $showCustomerForm): ?>
+    <?php if ($showCustomerForm): ?>
         <div class="col-12 col-xl-5">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-0 pt-4 pb-0">

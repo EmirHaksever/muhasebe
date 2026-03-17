@@ -1,5 +1,5 @@
 <?php
-include_once __DIR__ . "/../includes/auth_check.php";
+require_once __DIR__ . "/../includes/auth_check.php";
 $pageTitle = "Gider Kategorileri";
 
 $error = '';
@@ -105,7 +105,7 @@ include_once __DIR__ . '/../includes/header.php';
 <?php endif; ?>
 
 <div class="row g-4">
-    <div class="col-12 col-lg-5">
+    <div class="col-12">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white border-0 pt-4 pb-0">
                 <?php if ($editKategori): ?>
@@ -154,7 +154,7 @@ include_once __DIR__ . '/../includes/header.php';
         </div>
     </div>
 
-    <div class="col-12 col-lg-7">
+    <div class="col-12">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white border-0 pt-4 pb-0">
                 <h2 class="h4 mb-1">Gider Kategori Listesi</h2>
