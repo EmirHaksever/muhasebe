@@ -158,6 +158,11 @@ function tl($v)
                             <div class="d-flex flex-wrap gap-2">
                                 <button type="submit" class="btn btn-primary">Filtrele</button>
                                 <a href="reports.php" class="btn btn-outline-secondary">Temizle</a>
+                                <a href="reports_print.php?start=<?php echo urlencode($start); ?>&end=<?php echo urlencode($end); ?>"
+                                    target="_blank"
+                                    class="btn btn-outline-dark">
+                                    Raporu Yazdır / PDF Al
+                                </a>
                             </div>
                         </div>
                     </div>
