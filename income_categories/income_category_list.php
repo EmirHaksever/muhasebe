@@ -1,27 +1,167 @@
 <?php
-include_once __DIR__ . "/../includes/auth_check.php";
-$pageTitle = "Gelir Kategori Listesi";
+require_once __DIR__ . "/../includes/auth_check.php";
+$pageTitle = "Gelir Kategorileri";
+
+$error = '';
+$editKategori = null;
+
+if (isset($_GET['edit_id']) && is_numeric($_GET['edit_id'])) {
+    $editId = (int)$_GET['edit_id'];
+
+    $stmt = $pdo->prepare('SELECT id, name FROM income_categories WHERE id = :id');
+    $stmt->execute(['id' => $editId]);
+    $editKategori = $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = $_POST['action'] ?? '';
+
+    if ($action === 'add') {
+        $name = trim($_POST['name'] ?? '');
+
+        if ($name === '') {
+            $error = 'Kategori adı boş olamaz.';
+        } else {
+            $stmt = $pdo->prepare('
+                INSERT INTO income_categories (name, is_active)
+                VALUES (:name, :is_active)
+            ');
+            $stmt->execute([
+                'name' => $name,
+                'is_active' => 1
+            ]);
+
+            header('Location: income_category_list.php?ok=1');
+            exit;
+        }
+    }
+
+    if ($action === 'toggle') {
+        if (!isset($_POST['id']) || !is_numeric($_POST['id'])) {
+            exit('Geçersiz kategori ID');
+        }
+
+        $id = (int)$_POST['id'];
+
+        $stmt = $pdo->prepare('UPDATE income_categories SET is_active = NOT is_active WHERE id = :id');
+        $stmt->execute(['id' => $id]);
+
+        header('Location: income_category_list.php?toggled=1');
+        exit;
+    }
+
+    if ($action === 'edit') {
+        if (!isset($_POST['id']) || !is_numeric($_POST['id'])) {
+            exit('Geçersiz kategori ID');
+        }
+
+        $id = (int)$_POST['id'];
+        $name = trim($_POST['name'] ?? '');
+
+        if ($name === '') {
+            $error = 'Kategori adı boş olamaz.';
+        } else {
+            $stmt = $pdo->prepare('UPDATE income_categories SET name = :name WHERE id = :id');
+            $stmt->execute([
+                'name' => $name,
+                'id' => $id
+            ]);
+
+            header('Location: income_category_list.php?edited=1');
+            exit;
+        }
+    }
+}
+
+$stmt = $pdo->prepare('SELECT * FROM income_categories ORDER BY id ASC');
+$stmt->execute();
+$kategoriler = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 include_once __DIR__ . '/../includes/header.php';
-
-$sorgu = $pdo->prepare('SELECT * FROM income_categories ORDER BY name ASC');
-$sorgu->execute();
-$kategoriler = $sorgu->fetchAll(PDO::FETCH_ASSOC);
 ?>
+
+<?php if ($error !== ''): ?>
+    <div class="alert alert-danger" role="alert">
+        <?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?>
+    </div>
+<?php endif; ?>
+
+<?php if (isset($_GET['ok'])): ?>
+    <div class="alert alert-success" role="alert">
+        Kategori eklendi.
+    </div>
+<?php endif; ?>
+
+<?php if (isset($_GET['toggled'])): ?>
+    <div class="alert alert-success" role="alert">
+        Kategori durumu güncellendi.
+    </div>
+<?php endif; ?>
+
+<?php if (isset($_GET['edited'])): ?>
+    <div class="alert alert-success" role="alert">
+        Kategori güncellendi.
+    </div>
+<?php endif; ?>
 
 <div class="row g-4">
     <div class="col-12">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white border-0 pt-4 pb-0">
-                <h2 class="h4 mb-1">Gelir Kategorileri</h2>
-                <p class="text-muted mb-0">Gelir kategorilerini görüntüleyin ve yönetin.</p>
+                <?php if ($editKategori): ?>
+                    <h2 class="h4 mb-1">Kategori Düzenle</h2>
+                    <p class="text-muted mb-0">Seçili gelir kategorisini güncelleyin.</p>
+                <?php else: ?>
+                    <h2 class="h4 mb-1">Kategori Ekle</h2>
+                    <p class="text-muted mb-0">Yeni gelir kategorisi oluşturun.</p>
+                <?php endif; ?>
             </div>
 
             <div class="card-body pt-4">
-                <div class="d-flex flex-wrap gap-2 mb-3">
-                    <a href="income_category_add.php" class="btn btn-success">Kategori Ekle</a>
-                </div>
+                <?php if ($editKategori): ?>
+                    <form method="POST" action="income_category_list.php">
+                        <input type="hidden" name="action" value="edit">
+                        <input type="hidden" name="id" value="<?php echo (int)$editKategori['id']; ?>">
 
+                        <div class="mb-3">
+                            <label for="edit_name" class="form-label">Yeni Kategori Adı</label>
+                            <input
+                                type="text"
+                                id="edit_name"
+                                name="name"
+                                class="form-control"
+                                value="<?php echo htmlspecialchars($editKategori['name'], ENT_QUOTES, 'UTF-8'); ?>">
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="submit" class="btn btn-primary">Güncelle</button>
+                            <a href="income_category_list.php" class="btn btn-outline-secondary">İptal</a>
+                        </div>
+                    </form>
+                <?php else: ?>
+                    <form method="POST" action="income_category_list.php">
+                        <input type="hidden" name="action" value="add">
+
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Kategori Adı</label>
+                            <input type="text" id="name" name="name" class="form-control">
+                        </div>
+
+                        <button type="submit" class="btn btn-success">Kaydet</button>
+                    </form>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h2 class="h4 mb-1">Gelir Kategori Listesi</h2>
+                <p class="text-muted mb-0">Tüm gelir kategorilerini görüntüleyin ve yönetin.</p>
+            </div>
+
+            <div class="card-body pt-4">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
                         <thead class="table-light">
@@ -53,14 +193,15 @@ $kategoriler = $sorgu->fetchAll(PDO::FETCH_ASSOC);
                                         </td>
                                         <td class="text-end">
                                             <div class="d-inline-flex flex-wrap gap-2 justify-content-end">
-                                                <form method="POST" action="income_category_toggle.php" class="m-0">
+                                                <form method="POST" action="income_category_list.php" class="m-0">
+                                                    <input type="hidden" name="action" value="toggle">
                                                     <input type="hidden" name="id" value="<?php echo (int)$kategori['id']; ?>">
                                                     <button type="submit" class="btn btn-sm btn-outline-warning">
                                                         <?php echo (int)$kategori['is_active'] === 1 ? 'Pasif Yap' : 'Aktif Yap'; ?>
                                                     </button>
                                                 </form>
 
-                                                <a href="income_category_edit.php?id=<?php echo (int)$kategori['id']; ?>"
+                                                <a href="income_category_list.php?edit_id=<?php echo (int)$kategori['id']; ?>"
                                                     class="btn btn-sm btn-outline-primary">
                                                     Düzenle
                                                 </a>
@@ -71,6 +212,10 @@ $kategoriler = $sorgu->fetchAll(PDO::FETCH_ASSOC);
                             <?php endif; ?>
                         </tbody>
                     </table>
+                </div>
+
+                <div class="mt-3">
+                    <a href="../income/income_list.php" class="btn btn-outline-secondary">Geri Dön</a>
                 </div>
             </div>
         </div>

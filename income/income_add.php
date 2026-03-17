@@ -78,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <?php endif; ?>
 
 <div class="row justify-content-center">
-    <div class="col-12 col-lg-8 col-xl-7">
+    <div class="col-12 col-lg-12">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white border-0 pt-4 pb-0">
                 <h2 class="h4 mb-1">Gelir Ekle</h2>
