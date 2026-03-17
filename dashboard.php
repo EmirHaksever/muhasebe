@@ -216,7 +216,7 @@ $stmt = $pdo->query("
 ");
 $aylikBeklenenTahsilatlar = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-/* Son 6 ay gerçek tahsilat */
+/* Son 6 ay gerçekleşen tahsilat */
 $stmt = $pdo->query("
     SELECT 
         DATE_FORMAT(date, '%Y-%m') AS ay,
@@ -229,7 +229,7 @@ $stmt = $pdo->query("
 ");
 $aylikGercekTahsilatlar = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-/* Gider kategorileri pasta grafik */
+/* Gider kategorileri dağılımı */
 $stmt = $pdo->query("
     SELECT 
         COALESCE(ec.name, 'Kategori Silinmiş') AS category_name,
@@ -260,7 +260,6 @@ foreach ($aylikGercekTahsilatlar as $row) {
 $tumAylar = array_keys($tumAylar);
 sort($tumAylar);
 
-/* Haritalar */
 $gelirMap = [];
 $giderMap = [];
 $beklenenMap = [];
@@ -319,78 +318,224 @@ function tl($v)
 require_once __DIR__ . '/includes/header.php';
 ?>
 
-<div class="container-fluid py-4">
+<style>
+    .dashboard-shell {
+        background: #f4f6fb;
+        border-radius: 1rem;
+    }
+
+    .dashboard-alert {
+        border: 0;
+        border-radius: 1rem;
+        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+        color: #166534;
+    }
+
+    .quick-btn {
+        border-radius: 1rem;
+        min-height: 78px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        text-decoration: none;
+        box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-card {
+        border: 0;
+        border-radius: 1rem;
+        color: #fff;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 0.5rem 1.1rem rgba(0, 0, 0, 0.10);
+    }
+
+    .stat-card .card-body {
+        padding: 1.2rem 1.25rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .stat-card .stat-title {
+        opacity: .9;
+        font-size: .9rem;
+        margin-bottom: .35rem;
+    }
+
+    .stat-card .stat-value {
+        font-size: 1.8rem;
+        font-weight: 800;
+        line-height: 1.15;
+    }
+
+    .stat-card .stat-sub {
+        margin-top: .45rem;
+        font-size: .8rem;
+        opacity: .9;
+    }
+
+    .stat-card::after {
+        content: "";
+        position: absolute;
+        right: -30px;
+        bottom: -30px;
+        width: 120px;
+        height: 120px;
+        background: rgba(255, 255, 255, .12);
+        border-radius: 50%;
+    }
+
+    .stat-green {
+        background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+    }
+
+    .stat-red {
+        background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+    }
+
+    .stat-blue {
+        background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+    }
+
+    .stat-amber {
+        background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+    }
+
+    .stat-dark {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    }
+
+    .stat-cyan {
+        background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
+    }
+
+    .stat-purple {
+        background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+    }
+
+    .stat-slate {
+        background: linear-gradient(135deg, #334155 0%, #475569 100%);
+    }
+
+    .panel-card {
+        border: 0;
+        border-radius: 1rem;
+        box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.07);
+    }
+
+    .panel-card .card-header {
+        background: #fff;
+        border-bottom: 1px solid #eef2f7;
+        border-top-left-radius: 1rem !important;
+        border-top-right-radius: 1rem !important;
+    }
+
+    .mini-stat {
+        border-radius: 1rem;
+        border: 0;
+        box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.07);
+    }
+
+    .mini-stat .value {
+        font-size: 1.35rem;
+        font-weight: 800;
+    }
+
+    .info-card {
+        border: 0;
+        border-radius: 1rem;
+        box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.07);
+    }
+
+    .table thead th {
+        font-size: .88rem;
+        font-weight: 700;
+    }
+
+    .progress {
+        border-radius: 999px;
+        background: #e5e7eb;
+    }
+
+    .progress-bar {
+        border-radius: 999px;
+    }
+
+    @media (max-width: 991.98px) {
+        .stat-card .stat-value {
+            font-size: 1.45rem;
+        }
+    }
+</style>
+
+<div class="container-fluid py-4 dashboard-shell">
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
         <div>
+            <h2 class="h4 mb-1 fw-bold">Dashboard</h2>
             <p class="text-muted mb-0">Genel finans, tahsilat ve proje özeti</p>
         </div>
     </div>
 
-    <div class="row g-3 mb-4">
-        <div class="col-12 col-sm-6 col-xl-3">
-            <a href="/income/income_add.php" class="btn btn-success w-100 py-3 fw-semibold">
-                + Gelir Ekle
-            </a>
-        </div>
-        <div class="col-12 col-sm-6 col-xl-3">
-            <a href="/expense/expense_add.php" class="btn btn-danger w-100 py-3 fw-semibold">
-                + Gider Ekle
-            </a>
-        </div>
-        <div class="col-12 col-sm-6 col-xl-3">
-            <a href="/projects/project_add.php" class="btn btn-primary w-100 py-3 fw-semibold">
-                + Proje Ekle
-            </a>
-        </div>
-        <div class="col-12 col-sm-6 col-xl-3">
-            <a href="/cari/cari_add.php" class="btn btn-dark w-100 py-3 fw-semibold">
-                + Müşteri Ekle
-            </a>
-        </div>
-    </div>
-
     <?php if ($gecikenTaksitSayisi > 0): ?>
-        <div class="alert alert-danger border-0 shadow-sm mb-4" role="alert">
+        <div class="alert dashboard-alert mb-4 shadow-sm" role="alert">
             <strong>Dikkat:</strong> <?php echo $gecikenTaksitSayisi; ?> adet gecikmiş taksit bulunuyor.
             Toplam gecikmiş tutar: <strong><?php echo tl($gecikenTaksitTutari); ?></strong>
         </div>
     <?php endif; ?>
 
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-6 col-xl-3">
+            <a href="/income/income_add.php" class="quick-btn btn btn-success w-100">+ Gelir Ekle</a>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <a href="/expense/expense_add.php" class="quick-btn btn btn-danger w-100">+ Gider Ekle</a>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <a href="/projects/project_add.php" class="quick-btn btn btn-primary w-100">+ Proje Ekle</a>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <a href="/cari/cari_add.php" class="quick-btn btn btn-dark w-100">+ Müşteri Ekle</a>
+        </div>
+    </div>
+
     <div class="row g-4 mb-4">
         <div class="col-12 col-md-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100">
+            <div class="card stat-card stat-green h-100">
                 <div class="card-body">
-                    <small class="text-muted d-block mb-2">Toplam Gelir</small>
-                    <div class="fs-4 fw-bold text-success"><?php echo tl($toplamGelir); ?></div>
+                    <div class="stat-title">Toplam Gelir</div>
+                    <div class="stat-value"><?php echo tl($toplamGelir); ?></div>
+                    <div class="stat-sub">Sistemdeki toplam gelir kaydı</div>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-md-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100">
+            <div class="card stat-card stat-red h-100">
                 <div class="card-body">
-                    <small class="text-muted d-block mb-2">Toplam Gider</small>
-                    <div class="fs-4 fw-bold text-danger"><?php echo tl($toplamGider); ?></div>
+                    <div class="stat-title">Toplam Gider</div>
+                    <div class="stat-value"><?php echo tl($toplamGider); ?></div>
+                    <div class="stat-sub">Sistemdeki toplam gider kaydı</div>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-md-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100">
+            <div class="card stat-card <?php echo $netDurum >= 0 ? 'stat-blue' : 'stat-dark'; ?> h-100">
                 <div class="card-body">
-                    <small class="text-muted d-block mb-2">Net Durum</small>
-                    <div class="fs-4 fw-bold <?php echo $netDurum >= 0 ? 'text-success' : 'text-danger'; ?>">
-                        <?php echo tl($netDurum); ?>
-                    </div>
+                    <div class="stat-title">Net Durum</div>
+                    <div class="stat-value"><?php echo tl($netDurum); ?></div>
+                    <div class="stat-sub">Gelir - gider farkı</div>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-md-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100">
+            <div class="card stat-card stat-amber h-100">
                 <div class="card-body">
-                    <small class="text-muted d-block mb-2">Kalan Alacak</small>
-                    <div class="fs-4 fw-bold text-primary"><?php echo tl($kalanAlacak); ?></div>
+                    <div class="stat-title">Kalan Alacak</div>
+                    <div class="stat-value"><?php echo tl($kalanAlacak); ?></div>
+                    <div class="stat-sub">Henüz tahsil edilmemiş toplam tutar</div>
                 </div>
             </div>
         </div>
@@ -398,128 +543,41 @@ require_once __DIR__ . '/includes/header.php';
 
     <div class="row g-4 mb-4">
         <div class="col-12 col-md-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100">
+            <div class="card stat-card stat-slate h-100">
                 <div class="card-body">
-                    <small class="text-muted d-block mb-2">Aktif Proje</small>
-                    <div class="fs-4 fw-bold"><?php echo $aktifProjeSayisi; ?></div>
+                    <div class="stat-title">Aktif Proje</div>
+                    <div class="stat-value"><?php echo $aktifProjeSayisi; ?></div>
+                    <div class="stat-sub">Aktif durumdaki proje sayısı</div>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-md-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100">
+            <div class="card stat-card stat-cyan h-100">
                 <div class="card-body">
-                    <small class="text-muted d-block mb-2">Toplam Cari</small>
-                    <div class="fs-4 fw-bold text-primary"><?php echo $toplamCariSayisi; ?></div>
+                    <div class="stat-title">Toplam Cari</div>
+                    <div class="stat-value"><?php echo $toplamCariSayisi; ?></div>
+                    <div class="stat-sub">Müşteri ve tedarikçi toplamı</div>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-md-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100">
+            <div class="card stat-card stat-red h-100">
                 <div class="card-body">
-                    <small class="text-muted d-block mb-2">Geciken Taksit</small>
-                    <div class="fs-4 fw-bold text-danger"><?php echo $gecikenTaksitSayisi; ?></div>
+                    <div class="stat-title">Geciken Taksit</div>
+                    <div class="stat-value"><?php echo $gecikenTaksitSayisi; ?></div>
+                    <div class="stat-sub"><?php echo tl($gecikenTaksitTutari); ?> gecikmiş tutar</div>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-md-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100">
+            <div class="card stat-card stat-purple h-100">
                 <div class="card-body">
-                    <small class="text-muted d-block mb-2">Tahsilat Oranı</small>
-                    <div class="fs-4 fw-bold text-warning">%<?php echo number_format($tahsilatOrani, 2, ',', '.'); ?></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row g-4 mb-4">
-        <div class="col-12 col-xl-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white border-0 pt-4 pb-0">
-                    <h2 class="h5 mb-0 fw-semibold">Tahsilat Performansı</h2>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <small class="text-muted d-block mb-2">Bu Ay Beklenen Tahsilat</small>
-                        <div class="fs-5 fw-bold text-warning"><?php echo tl($buAyBeklenenTahsilat); ?></div>
-                    </div>
-
-                    <div class="mb-3">
-                        <small class="text-muted d-block mb-2">Bu Ay Gerçekleşen Tahsilat</small>
-                        <div class="fs-5 fw-bold text-success"><?php echo tl($buAyTahsilat); ?></div>
-                    </div>
-
-                    <div class="mb-3">
-                        <small class="text-muted d-block mb-2">Eksik Kalan Tutar</small>
-                        <div class="fs-5 fw-bold text-danger"><?php echo tl($eksikTahsilat); ?></div>
-                    </div>
-
-                    <div class="mb-2 d-flex justify-content-between">
-                        <small class="text-muted">Performans</small>
-                        <small class="fw-semibold">%<?php echo number_format($tahsilatPerformansYuzdesi, 2, ',', '.'); ?></small>
-                    </div>
-
-                    <div class="progress" style="height: 12px;">
-                        <div
-                            class="progress-bar <?php echo $tahsilatPerformansYuzdesi >= 70 ? 'bg-success' : ($tahsilatPerformansYuzdesi >= 40 ? 'bg-warning' : 'bg-danger'); ?>"
-                            role="progressbar"
-                            style="width: <?php echo $tahsilatPerformansYuzdesi; ?>%;"
-                            aria-valuenow="<?php echo $tahsilatPerformansYuzdesi; ?>"
-                            aria-valuemin="0"
-                            aria-valuemax="100">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-12 col-xl-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white border-0 pt-4 pb-0">
-                    <h2 class="h5 mb-0 fw-semibold">Gider Kategorileri Dağılımı</h2>
-                </div>
-                <div class="card-body">
-                    <canvas id="expensePieChart" height="120"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row g-4 mb-4">
-        <div class="col-12 col-md-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <small class="text-muted d-block mb-2">En Çok Gelir Getiren Kategori</small>
-                    <div class="fw-semibold mb-2">
-                        <?php echo htmlspecialchars($enCokGelirKategori['category_name'] ?? '-', ENT_QUOTES, 'UTF-8'); ?>
-                    </div>
-                    <div class="fs-5 fw-bold text-success"><?php echo tl($enCokGelirKategori['total'] ?? 0); ?></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-12 col-md-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <small class="text-muted d-block mb-2">En Çok Gider Olan Kategori</small>
-                    <div class="fw-semibold mb-2">
-                        <?php echo htmlspecialchars($enCokGiderKategori['category_name'] ?? '-', ENT_QUOTES, 'UTF-8'); ?>
-                    </div>
-                    <div class="fs-5 fw-bold text-danger"><?php echo tl($enCokGiderKategori['total'] ?? 0); ?></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-12 col-md-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <small class="text-muted d-block mb-2">En Çok Tahsilat Gelen Proje</small>
-                    <div class="fw-semibold mb-2">
-                        <?php echo htmlspecialchars($enCokTahsilatProje['project_name'] ?? '-', ENT_QUOTES, 'UTF-8'); ?>
-                    </div>
-                    <div class="fs-5 fw-bold text-primary"><?php echo tl($enCokTahsilatProje['total'] ?? 0); ?></div>
+                    <div class="stat-title">Genel Tahsilat Oranı</div>
+                    <div class="stat-value">%<?php echo number_format($tahsilatOrani, 2, ',', '.'); ?></div>
+                    <div class="stat-sub">Tüm proje planlarına göre tahsilat</div>
                 </div>
             </div>
         </div>
@@ -527,23 +585,107 @@ require_once __DIR__ . '/includes/header.php';
 
     <div class="row g-4 mb-4">
         <div class="col-12 col-xl-8">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white border-0 pt-4 pb-0">
+            <div class="card panel-card h-100">
+                <div class="card-header pt-4 pb-3">
                     <h2 class="h5 mb-0 fw-semibold">Son 6 Ay Gelir / Gider / Net Durum</h2>
                 </div>
                 <div class="card-body">
-                    <canvas id="financeChart" height="100"></canvas>
+                    <canvas id="financeChart" height="95"></canvas>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-xl-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white border-0 pt-4 pb-0">
-                    <h2 class="h5 mb-0 fw-semibold">Tahsilat Karşılaştırması</h2>
+            <div class="row g-4">
+                <div class="col-12">
+                    <div class="card info-card h-100">
+                        <div class="card-header bg-white border-0 pt-4 pb-0">
+                            <h2 class="h5 mb-0 fw-semibold">Bu Ay Tahsilat Performansı</h2>
+                        </div>
+                        <div class="card-body pt-4">
+                            <div class="mb-3">
+                                <small class="text-muted d-block mb-1">Beklenen Tahsilat</small>
+                                <div class="value text-warning"><?php echo tl($buAyBeklenenTahsilat); ?></div>
+                            </div>
+
+                            <div class="mb-3">
+                                <small class="text-muted d-block mb-1">Gerçekleşen Tahsilat</small>
+                                <div class="value text-success"><?php echo tl($buAyTahsilat); ?></div>
+                            </div>
+
+                            <div class="mb-3">
+                                <small class="text-muted d-block mb-1">Eksik Kalan</small>
+                                <div class="value text-danger"><?php echo tl($eksikTahsilat); ?></div>
+                            </div>
+
+                            <div class="d-flex justify-content-between mb-2">
+                                <small class="text-muted">Performans</small>
+                                <small class="fw-bold">%<?php echo number_format($tahsilatPerformansYuzdesi, 2, ',', '.'); ?></small>
+                            </div>
+
+                            <div class="progress" style="height:12px;">
+                                <div
+                                    class="progress-bar <?php echo $tahsilatPerformansYuzdesi >= 70 ? 'bg-success' : ($tahsilatPerformansYuzdesi >= 40 ? 'bg-warning' : 'bg-danger'); ?>"
+                                    role="progressbar"
+                                    style="width: <?php echo $tahsilatPerformansYuzdesi; ?>%;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="card mini-stat h-100">
+                        <div class="card-body">
+                            <small class="text-muted d-block mb-1">En Çok Gelir Getiren Kategori</small>
+                            <div class="fw-semibold mb-2"><?php echo htmlspecialchars($enCokGelirKategori['category_name'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></div>
+                            <div class="value text-success"><?php echo tl($enCokGelirKategori['total'] ?? 0); ?></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="card mini-stat h-100">
+                        <div class="card-body">
+                            <small class="text-muted d-block mb-1">En Çok Gider Olan Kategori</small>
+                            <div class="fw-semibold mb-2"><?php echo htmlspecialchars($enCokGiderKategori['category_name'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></div>
+                            <div class="value text-danger"><?php echo tl($enCokGiderKategori['total'] ?? 0); ?></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="card mini-stat h-100">
+                        <div class="card-body">
+                            <small class="text-muted d-block mb-1">En Çok Tahsilat Gelen Proje</small>
+                            <div class="fw-semibold mb-2"><?php echo htmlspecialchars($enCokTahsilatProje['project_name'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></div>
+                            <div class="value text-primary"><?php echo tl($enCokTahsilatProje['total'] ?? 0); ?></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-12 col-xl-4">
+            <div class="card panel-card h-100">
+                <div class="card-header pt-4 pb-3">
+                    <h2 class="h5 mb-0 fw-semibold">Gider Kategorileri Dağılımı</h2>
                 </div>
                 <div class="card-body">
-                    <canvas id="collectionChart" height="100"></canvas>
+                    <canvas id="expensePieChart" height="120"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-8">
+            <div class="card panel-card h-100">
+                <div class="card-header pt-4 pb-3">
+                    <h2 class="h5 mb-0 fw-semibold">Beklenen / Gerçekleşen Tahsilat</h2>
+                </div>
+                <div class="card-body">
+                    <canvas id="collectionChart" height="120"></canvas>
                 </div>
             </div>
         </div>
@@ -551,8 +693,8 @@ require_once __DIR__ . '/includes/header.php';
 
     <div class="row g-4">
         <div class="col-12 col-xl-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white border-0 pt-4 pb-0">
+            <div class="card panel-card h-100">
+                <div class="card-header pt-4 pb-3">
                     <h2 class="h5 mb-0 fw-semibold">Yaklaşan Taksitler</h2>
                 </div>
                 <div class="card-body">
@@ -590,8 +732,8 @@ require_once __DIR__ . '/includes/header.php';
         </div>
 
         <div class="col-12 col-xl-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white border-0 pt-4 pb-0">
+            <div class="card panel-card h-100">
+                <div class="card-header pt-4 pb-3">
                     <h2 class="h5 mb-0 fw-semibold">Son Tahsilatlar</h2>
                 </div>
                 <div class="card-body">
@@ -626,8 +768,8 @@ require_once __DIR__ . '/includes/header.php';
         </div>
 
         <div class="col-12 col-xl-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white border-0 pt-4 pb-0">
+            <div class="card panel-card h-100">
+                <div class="card-header pt-4 pb-3">
                     <h2 class="h5 mb-0 fw-semibold">Son Giderler</h2>
                 </div>
                 <div class="card-body">
@@ -678,16 +820,16 @@ document.addEventListener("DOMContentLoaded", function () {
                     {
                         label: "Gelir",
                         data: ' . json_encode($chartGelir, JSON_UNESCAPED_UNICODE) . ',
-                        backgroundColor: "rgba(25, 135, 84, 0.75)",
-                        borderColor: "rgba(25, 135, 84, 1)",
+                        backgroundColor: "rgba(34, 197, 94, 0.75)",
+                        borderColor: "rgba(34, 197, 94, 1)",
                         borderWidth: 1,
                         borderRadius: 6
                     },
                     {
                         label: "Gider",
                         data: ' . json_encode($chartGider, JSON_UNESCAPED_UNICODE) . ',
-                        backgroundColor: "rgba(220, 53, 69, 0.75)",
-                        borderColor: "rgba(220, 53, 69, 1)",
+                        backgroundColor: "rgba(239, 68, 68, 0.75)",
+                        borderColor: "rgba(239, 68, 68, 1)",
                         borderWidth: 1,
                         borderRadius: 6
                     },
@@ -696,7 +838,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         data: ' . json_encode($chartNet, JSON_UNESCAPED_UNICODE) . ',
                         type: "line",
                         borderWidth: 2,
-                        tension: 0.3,
+                        tension: 0.35,
                         fill: false
                     }
                 ]
@@ -728,16 +870,16 @@ document.addEventListener("DOMContentLoaded", function () {
                     {
                         label: "Beklenen",
                         data: ' . json_encode($chartBeklenen, JSON_UNESCAPED_UNICODE) . ',
-                        backgroundColor: "rgba(255, 193, 7, 0.75)",
-                        borderColor: "rgba(255, 193, 7, 1)",
+                        backgroundColor: "rgba(245, 158, 11, 0.75)",
+                        borderColor: "rgba(245, 158, 11, 1)",
                         borderWidth: 1,
                         borderRadius: 6
                     },
                     {
                         label: "Gerçekleşen",
                         data: ' . json_encode($chartGercek, JSON_UNESCAPED_UNICODE) . ',
-                        backgroundColor: "rgba(13, 110, 253, 0.75)",
-                        borderColor: "rgba(13, 110, 253, 1)",
+                        backgroundColor: "rgba(59, 130, 246, 0.75)",
+                        borderColor: "rgba(59, 130, 246, 1)",
                         borderWidth: 1,
                         borderRadius: 6
                     }
@@ -763,7 +905,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const pieCtx = document.getElementById("expensePieChart");
     if (pieCtx) {
         new Chart(pieCtx, {
-            type: "pie",
+            type: "doughnut",
             data: {
                 labels: ' . json_encode($pieLabels, JSON_UNESCAPED_UNICODE) . ',
                 datasets: [
@@ -776,6 +918,7 @@ document.addEventListener("DOMContentLoaded", function () {
             options: {
                 responsive: true,
                 maintainAspectRatio: true,
+                cutout: "55%",
                 plugins: {
                     legend: {
                         position: "bottom"
