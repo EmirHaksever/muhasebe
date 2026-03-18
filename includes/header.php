@@ -26,6 +26,7 @@ function isOpenMenu($paths, $currentPath)
     <title><?php echo htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8'); ?></title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <link rel="stylesheet" href="/assets/css/admin.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -95,10 +96,155 @@ function isOpenMenu($paths, $currentPath)
             box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, .05);
         }
 
+        .top-calc-btn {
+            width: 40px;
+            height: 40px;
+            border: 0;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.18);
+            transition: all .2s ease;
+        }
+
+        .top-calc-btn:hover {
+            transform: translateY(-1px);
+            color: #fff;
+            background: linear-gradient(135deg, #111827 0%, #334155 100%);
+        }
+
+        .calc-modal .modal-content {
+            border: 0;
+            border-radius: 1.5rem;
+            overflow: hidden;
+            background: transparent;
+            box-shadow: 0 25px 60px rgba(15, 23, 42, 0.35);
+        }
+
+        .calc-shell {
+            background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
+            color: #fff;
+            padding: 1.2rem;
+        }
+
+        .calc-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .calc-top h5 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .calc-display-wrap {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 1.25rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            backdrop-filter: blur(8px);
+        }
+
+        .calc-history {
+            min-height: 24px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, .65);
+            text-align: right;
+            word-break: break-all;
+        }
+
+        .calc-display {
+            min-height: 52px;
+            font-size: 2rem;
+            font-weight: 800;
+            text-align: right;
+            word-break: break-all;
+        }
+
+        .calc-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+        }
+
+        .calc-btn {
+            border: 0;
+            border-radius: 1rem;
+            min-height: 62px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            transition: all .18s ease;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
+        }
+
+        .calc-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .calc-btn-dark {
+            background: rgba(255, 255, 255, 0.06);
+            color: #fff;
+        }
+
+        .calc-btn-dark:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .calc-btn-op {
+            background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+            color: #fff;
+        }
+
+        .calc-btn-op:hover {
+            filter: brightness(1.05);
+        }
+
+        .calc-btn-equal {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: #fff;
+        }
+
+        .calc-btn-equal:hover {
+            filter: brightness(1.05);
+        }
+
+        .calc-btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: #fff;
+        }
+
+        .calc-btn-zero {
+            grid-column: span 2;
+        }
+
+        .calc-mini-note {
+            margin-top: 1rem;
+            font-size: .82rem;
+            color: rgba(255, 255, 255, .6);
+            text-align: center;
+        }
+
         @media (max-width: 991.98px) {
             .app-sidebar {
                 width: 100%;
                 min-height: auto;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .calc-display {
+                font-size: 1.65rem;
+            }
+
+            .calc-btn {
+                min-height: 56px;
             }
         }
     </style>
@@ -204,6 +350,7 @@ function isOpenMenu($paths, $currentPath)
                 <hr class="border-secondary my-2">
 
                 <a class="sidebar-link <?php echo isActivePath('/settings.php', $currentPath); ?>" href="/settings.php">Ayarlar</a>
+                <a class="sidebar-link <?php echo isActivePath('/admin/admin_management.php', $currentPath); ?>" href="/admin/admin_management.php"> Kullanıcı Yönetimi</a>
             </nav>
         </aside>
 
@@ -219,10 +366,15 @@ function isOpenMenu($paths, $currentPath)
                         <?php echo htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8'); ?>
                     </a>
 
-                    <div class="ms-auto d-flex align-items-center gap-3">
-                        <span class="text-muted small">
+                    <div class="ms-auto d-flex align-items-center gap-2 gap-md-3">
+                        <span class="text-muted small d-none d-md-inline">
                             Hoş geldiniz, <?php echo htmlspecialchars($_SESSION['admin_username'] ?? 'Admin', ENT_QUOTES, 'UTF-8'); ?>
                         </span>
+
+                        <button type="button" class="top-calc-btn" data-bs-toggle="modal" data-bs-target="#calculatorModal" title="Hesap Makinesi">
+                            <i class="fa-solid fa-calculator"></i>
+                        </button>
+
                         <a href="/auth/logout.php" class="btn btn-danger btn-sm">Çıkış Yap</a>
                     </div>
                 </div>
@@ -321,6 +473,9 @@ function isOpenMenu($paths, $currentPath)
                         <a class="sidebar-link <?php echo isActivePath('/hareketler.php', $currentPath); ?>" href="/hareketler.php">Hareketler</a>
                         <a class="sidebar-link <?php echo isActivePath('/reports.php', $currentPath); ?>" href="/reports.php">Raporlar</a>
                         <a class="sidebar-link <?php echo isActivePath('/settings.php', $currentPath); ?>" href="/settings.php">Ayarlar</a>
+                        <a class="sidebar-link <?php echo isActivePath('/admin/admin_management.php', $currentPath); ?>" href="/admin/admin_management.php"> Kullanıcı Yönetimi</a>
+
+
                     </nav>
                 </div>
             </div>
@@ -328,4 +483,3 @@ function isOpenMenu($paths, $currentPath)
             <main class="container-fluid py-4">
                 <div class="page-card bg-white p-4">
                     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
-                    </div>
