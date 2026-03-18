@@ -327,7 +327,7 @@ require_once __DIR__ . '/includes/header.php';
     .dashboard-alert {
         border: 0;
         border-radius: 1rem;
-        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+        background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
         color: #166534;
     }
 
@@ -375,16 +375,6 @@ require_once __DIR__ . '/includes/header.php';
         opacity: .9;
     }
 
-    .stat-card::after {
-        content: "";
-        position: absolute;
-        right: -30px;
-        bottom: -30px;
-        width: 120px;
-        height: 120px;
-        background: rgba(255, 255, 255, .12);
-        border-radius: 50%;
-    }
 
     .stat-green {
         background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
