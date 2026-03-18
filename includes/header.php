@@ -350,6 +350,7 @@ function isOpenMenu($paths, $currentPath)
                 <hr class="border-secondary my-2">
 
                 <a class="sidebar-link <?php echo isActivePath('/settings.php', $currentPath); ?>" href="/settings.php">Ayarlar</a>
+                <a class="sidebar-link <?php echo isActivePath('/admin/admin_management.php', $currentPath); ?>" href="/admin/admin_management.php"> Kullanıcı Yönetimi</a>
             </nav>
         </aside>
 
@@ -472,6 +473,9 @@ function isOpenMenu($paths, $currentPath)
                         <a class="sidebar-link <?php echo isActivePath('/hareketler.php', $currentPath); ?>" href="/hareketler.php">Hareketler</a>
                         <a class="sidebar-link <?php echo isActivePath('/reports.php', $currentPath); ?>" href="/reports.php">Raporlar</a>
                         <a class="sidebar-link <?php echo isActivePath('/settings.php', $currentPath); ?>" href="/settings.php">Ayarlar</a>
+                        <a class="sidebar-link <?php echo isActivePath('/admin/admin_management.php', $currentPath); ?>" href="/admin/admin_management.php"> Kullanıcı Yönetimi</a>
+
+
                     </nav>
                 </div>
             </div>
